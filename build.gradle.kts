@@ -31,6 +31,7 @@ dependencies {
     implementation(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
     developmentOnly(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
     testImplementation(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
+    developmentOnly(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
 
     implementation(libs.spring.boot.starter.webmvc)
     implementation(libs.spring.boot.starter.thymeleaf)
