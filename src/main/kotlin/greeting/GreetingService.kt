@@ -3,37 +3,60 @@ package es.unizar.webeng.hello.greeting
 import java.time.LocalTime
 
 /**
- * Idiomas soportados por el saludo localizado.
+ * Supported languages for the greeting.
  *
- * @property code la etiqueta de dos letras usada en el parametro `lang` y
- *   extraida de la cabecera `Accept-Language` (p. ej. `"en"`, `"es"`).
+ * Each language has a short code used in the `lang` query parameter
+ * and in the `Accept-Language` HTTP header.
  */
 enum class GreetingLanguage(val code: String) {
     ENGLISH("en"),
     SPANISH("es");
 
     companion object {
+
+        // Creates a map like:
+        // "en" -> ENGLISH
+        // "es" -> SPANISH
         private val byCode = entries.associateBy { it.code }
 
-        /** Resuelve un idioma a partir de [code], sin distinguir mayusculas/minusculas, o `null` si no esta soportado/esta vacio. */
+        /**
+         * Converts a language code into a [GreetingLanguage].
+         *
+         * Returns `null` if the code is empty or not supported.
+         */
         fun fromCode(code: String?): GreetingLanguage? =
-            code?.trim()?.takeIf { it.isNotEmpty() }?.lowercase()?.let { byCode[it] }
+            code
+                ?.trim() // Removes spaces before and after the text
+                ?.takeIf { it.isNotEmpty() } // Keeps the value only if it is not empty
+                ?.lowercase() // Makes the comparison case-insensitive
+                ?.let { byCode[it] } // Looks for the code in the map
     }
 }
 
-/** Franja horaria usada para elegir la frase de saludo. */
-enum class TimeOfDay { MORNING, AFTERNOON, EVENING, NIGHT }
+/**
+ * Parts of the day used to choose the greeting.
+ */
+enum class TimeOfDay {
+    MORNING,
+    AFTERNOON,
+    EVENING,
+    NIGHT
+}
 
 /**
- * Logica pura y sin estado detras del saludo decidido por el servidor: que [TimeOfDay]
- * es, que [GreetingLanguage] usar, y la frase de saludo final.
+ * Contains the logic used to build greetings.
  *
- * Se mantiene como [object] con funciones que reciben sus datos de entrada explicitamente
- * (sin reloj ni estado de la peticion oculto), de forma que el comportamiento es trivial
- * de testear sin Spring.
+ * It decides:
+ * - the part of the day,
+ * - the language,
+ * - and the final greeting message.
+ *
+ * The functions receive all required data as parameters,
+ * which makes them easy to test without Spring.
  */
 object GreetingService {
 
+    // Stores the greeting text for each language and part of the day.
     private val phrases: Map<GreetingLanguage, Map<TimeOfDay, String>> = mapOf(
         GreetingLanguage.ENGLISH to mapOf(
             TimeOfDay.MORNING to "Good morning",
@@ -42,32 +65,58 @@ object GreetingService {
             TimeOfDay.NIGHT to "Good night"
         ),
         GreetingLanguage.SPANISH to mapOf(
-            TimeOfDay.MORNING to "Buenos dias",
+            TimeOfDay.MORNING to "Buenos días",
             TimeOfDay.AFTERNOON to "Buenas tardes",
-            TimeOfDay.EVENING to "Buenas noches",
+            TimeOfDay.EVENING to "Buenas tardes",
             TimeOfDay.NIGHT to "Buenas noches"
         )
     )
 
-    /** Convierte una hora del dia en una franja [TimeOfDay]: 5-11 manana, 12-17 tarde, 18-21 noche-tarde, resto noche. */
+    /**
+     * Converts a time into a [TimeOfDay].
+     */
     fun timeOfDay(time: LocalTime): TimeOfDay = when (time.hour) {
-        in 5..11 -> TimeOfDay.MORNING
-        in 12..17 -> TimeOfDay.AFTERNOON
-        in 18..21 -> TimeOfDay.EVENING
+        in 6..12 -> TimeOfDay.MORNING
+        in 13..17 -> TimeOfDay.AFTERNOON
+        in 18..20 -> TimeOfDay.EVENING
         else -> TimeOfDay.NIGHT
     }
 
-    /** Devuelve la frase de saludo (p. ej. "Good morning") para [time] en [language]. */
-    fun timeOfDayGreeting(time: LocalTime, language: GreetingLanguage): String =
-        phrases.getValue(language).getValue(timeOfDay(time))
+    /**
+     * Returns the greeting text for a given time and language.
+     *
+     * Example: 10:00 + Spanish -> "Buenos días".
+     */
+    fun timeOfDayGreeting(
+        time: LocalTime,
+        language: GreetingLanguage
+    ): String =
+        phrases
+            .getValue(language) // Gets the map for the selected language
+            .getValue(timeOfDay(time)) // Gets the phrase for the current part of the day
 
     /**
-     * Resuelve que [GreetingLanguage] usar: un parametro `lang` explicito tiene prioridad;
-     * si no, se usa la primera etiqueta de la cabecera `Accept-Language`; si ninguno esta
-     * presente o soportado, se usa [GreetingLanguage.ENGLISH] por defecto.
+     * Chooses which language should be used.
+     *
+     * Priority:
+     * 1. `lang` query parameter.
+     * 2. `Accept-Language` HTTP header.
+     * 3. Spanish by default.
      */
-    fun resolveLanguage(langParam: String?, acceptLanguageHeader: String?): GreetingLanguage {
-        GreetingLanguage.fromCode(langParam)?.let { return it }
+    fun resolveLanguage(
+        langParam: String?,
+        acceptLanguageHeader: String?
+    ): GreetingLanguage {
+
+        // If a valid language was sent in ?lang=..., use it immediately.
+        GreetingLanguage.fromCode(langParam)?.let {
+            return it
+        }
+
+        // Example header:
+        // es-ES,es;q=0.9,en;q=0.8
+        //
+        // This code extracts only the first language code: "es".
         val headerLanguage = acceptLanguageHeader
             ?.split(",")
             ?.firstOrNull()
@@ -75,18 +124,38 @@ object GreetingService {
             ?.firstOrNull()
             ?.split("-")
             ?.firstOrNull()
-        return GreetingLanguage.fromCode(headerLanguage) ?: GreetingLanguage.SPANISH
+
+        // If the browser language is supported, use it.
+        // Otherwise, use Spanish.
+        return GreetingLanguage.fromCode(headerLanguage)
+            ?: GreetingLanguage.SPANISH
     }
 
     /**
-     * Construye la frase de saludo final para [time] y [language].
+     * Builds the final greeting message.
      *
-     * Cuando [name] esta vacio, devuelve la frase de la franja horaria seguida de
-     * [defaultMessage] (p. ej. "Good morning! Welcome to the Modern Web App!"); en caso
-     * contrario saluda a [name] directamente (p. ej. "Good morning, Developer!").
+     * If a name is provided:
+     * "Good afternoon, Mario!"
+     *
+     * If no name is provided:
+     * "Good afternoon! Welcome!"
      */
-    fun greet(name: String, time: LocalTime, language: GreetingLanguage, defaultMessage: String): String {
+    fun greet(
+        name: String,
+        time: LocalTime,
+        language: GreetingLanguage,
+        defaultMessage: String
+    ): String {
+
+        // Gets the first part of the greeting, for example "Buenas tardes".
         val prefix = timeOfDayGreeting(time, language)
-        return if (name.isNotBlank()) "$prefix, $name!" else "$prefix! $defaultMessage"
+
+        // If there is a name, greet the user directly.
+        // Otherwise, append the default message.
+        return if (name.isNotBlank()) {
+            "$prefix, $name!"
+        } else {
+            "$prefix! $defaultMessage"
+        }
     }
 }
