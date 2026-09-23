@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const responseInfo = document.getElementById('responseInfo');
     const webNameInput = document.getElementById('webName');
     const apiNameInput = document.getElementById('apiName');
+    const languageSelect = document.getElementById('languageSelect');
     
     // Format timestamp
     function getTimestamp() {
@@ -79,7 +80,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Test web page
     testWebBtn.addEventListener('click', async function() {
         const name = webNameInput.value.trim();
-        const url = name ? `/?name=${encodeURIComponent(name)}` : '/';
+        const language = languageSelect.value;
+
+        const url = name
+            ? `/?name=${encodeURIComponent(name)}&lang=${encodeURIComponent(language)}`
+            : `/?lang=${encodeURIComponent(language)}`;
         
         displayRequestInfo(url, 'GET');
         
@@ -96,7 +101,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Test API endpoint
     testApiBtn.addEventListener('click', async function() {
         const name = apiNameInput.value.trim();
-        const url = name ? `/api/hello?name=${encodeURIComponent(name)}` : '/api/hello';
+        const language = languageSelect.value;
+
+        const url = name
+            ? `/api/hello?name=${encodeURIComponent(name)}&lang=${encodeURIComponent(language)}`
+            : `/api/hello?lang=${encodeURIComponent(language)}`;
         
         displayRequestInfo(url, 'GET');
         
@@ -109,6 +118,16 @@ document.addEventListener('DOMContentLoaded', function() {
             // Update the main message in the HTML app
             if (response.ok && data.message) {
                 updateMainMessage(data.message, name);
+
+                const languageElement = document.getElementById('currentLanguage');
+                if (languageElement && data.language) {
+                    languageElement.textContent = `Language: ${data.language}`;
+                }
+
+                const timeOfDayElement = document.getElementById('currentTimeOfDay');
+                if (timeOfDayElement && data.timeOfDay) {
+                    timeOfDayElement.textContent = `Time of day: ${data.timeOfDay}`;
+                }
             }
         } catch (error) {
             displayResponseInfo(0, 'Network Error', { error: error.message });

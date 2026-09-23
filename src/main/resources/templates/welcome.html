@@ -33,7 +33,14 @@
                         <img class="d-block mx-auto mb-4 main-logo" src="/assets/logo.svg" alt="Universidad Zaragoza Logo">
                         <h1 class="display-4 fw-bold text-primary mb-4">Welcome to Modern Web App</h1>
                         <p class="lead mb-4" th:text="${message}">Hello student.</p>
-                        
+                        <p class="small text-muted mb-4">
+                            <span id="currentLanguage" th:text="'Language: ' + ${language}">Language: en</span>
+                            &middot;
+                            <span id="currentTimeOfDay" th:text="'Time of day: ' + ${timeOfDay}">Time of day: morning</span>
+                            &middot;
+                            <span>Try <code>?lang=es/en</code></span>
+                        </p>
+
                         <!-- HTTP Debug Section -->
                         <div class="row mt-4">
                             <div class="col-12">
@@ -51,6 +58,15 @@
                                         </p>
                                         
                                         <!-- Interactive HTTP Testing -->
+
+                                        <div class="mb-4">
+                                            <label for="languageSelect" class="form-label">Language</label>
+                                            <select id="languageSelect" class="form-select">
+                                                <option value="es">Spanish</option>
+                                                <option value="en">English</option>
+                                            </select>
+                                        </div>
+
                                         <div class="row mb-4">
                                             <div class="col-md-4">
                                                 <div class="card">
