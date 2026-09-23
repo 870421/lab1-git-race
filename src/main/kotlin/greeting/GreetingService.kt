@@ -138,7 +138,7 @@ object GreetingService {
      * "Good afternoon, Mario!"
      *
      * If no name is provided:
-     * "Good afternoon! Welcome!"
+     * "Good afternoon! $defaultMessage!"
      */
     fun greet(
         name: String,
