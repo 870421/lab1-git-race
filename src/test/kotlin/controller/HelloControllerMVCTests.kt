@@ -133,6 +133,10 @@ class HelloControllerMVCTests {
             GreetingLanguage.SPANISH
         )
 
+        val expectedTimeOfDay = GreetingService.timeOfDay(
+            LocalTime.now()
+        ).name.lowercase()
+
         mockMvc.perform(
             get("/api/hello")
                 .param("name", "Test")
@@ -142,7 +146,7 @@ class HelloControllerMVCTests {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.message", equalTo("$expectedPrefix, Test!")))
             .andExpect(jsonPath("$.language", equalTo("es")))
-            .andExpect(jsonPath("$.timeOfDay").exists())
+            .andExpect(jsonPath("$.timeOfDay", equalTo(expectedTimeOfDay)))
             .andExpect(jsonPath("$.timestamp").exists())
     }
 }
