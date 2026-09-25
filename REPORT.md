@@ -77,14 +77,16 @@ Finally, I ran `./gradlew check` again. The final result was `BUILD SUCCESSFUL`,
 
 ## AI disclosure
 
-Fill **either** the list **or** the no-AI line.
+- **Tools / skills:** Claude Code and ChatGPT.
 
-- **Tools / skills:** …
-- **Purpose:** …
-- **Representative prompts:** … (or appendix)
-- **Affected files/sections:** …
-- **Validation steps:** …
-- **Citations:** … (external snippets you adapted)
-- **Human-reviewed:** what you checked, changed, or rejected
+- **Purpose:** I used Claude Code to help create the first version of the greeting feature, including the new greeting service and changes in the controllers, tests and web interface. I used ChatGPT to review the generated code, understand how it worked, detect inconsistencies, adapt the behaviour to my final decisions, improve comments and documentation, and update the tests.
 
-Or: **No AI assistance** was used for this lab.
+- **Representative prompts:** Examples include asking Claude Code to extend the original application with greetings depending on language and time of day, and asking ChatGPT to explain the generated Kotlin and test code, review the behaviour of `lang` and `Accept-Language`, add a language selector to the debug interface, and update the tests to match the final implementation.
+
+- **Affected files/sections:** `GreetingService.kt`, `HelloController.kt`, `welcome.html`, `http-debug.js`, `GreetingServiceTest.kt`, `HelloControllerUnitTests.kt`, `HelloControllerMVCTests.kt`, `IntegrationTest.kt`, and parts of `REPORT.md`.
+
+- **Validation steps:** I manually reviewed the generated changes, ran the application with `./gradlew bootRun`, tested the web page and `/api/hello` endpoint with different names and languages, checked the `Accept-Language` behaviour, and ran `./gradlew check`. The final result was `BUILD SUCCESSFUL`.
+
+- **Citations:** No external code snippets were copied or adapted.
+
+- **Human-reviewed:** I reviewed and changed the generated code before submission. I modified the default language behaviour, time-of-day ranges, Spanish greeting texts, comments, the language selector, the JavaScript behaviour, and the unit, MVC and integration tests. I also checked that I could explain the controllers, `GreetingService`, MockMvc tests and integration tests.
